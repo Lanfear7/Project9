@@ -7,12 +7,18 @@ const { sequelize } = require('./models')
 
 // variable to enable global error logging
 const enableGlobalErrorLogging = process.env.ENABLE_GLOBAL_ERROR_LOGGING === 'true';
+//routes
+var apiRoutes = require("./routes/api");
 
 // create the Express app
 const app = express();
 
+
 // setup morgan which gives us http request logging
 app.use(morgan('dev'));
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 //Test connection to DB
 (async() =>{
@@ -24,6 +30,9 @@ app.use(morgan('dev'));
     console.log('Error Occurred', error)
   }
 })();
+
+
+app.use('/api', apiRoutes);
 
 // setup a friendly greeting for the root route
 app.get('/', (req, res) => {

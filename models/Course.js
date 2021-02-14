@@ -13,7 +13,7 @@ module.exports = (sequelize) => {
             allowNull: false,
         },
         description: {
-            type: Sequelize.STRING,
+            type: Sequelize.TEXT,
             allowNull: false,
         },
         estimatedTime: {
@@ -27,7 +27,12 @@ module.exports = (sequelize) => {
     },{ sequelize });
     //DB association to the course module  
     Course.associate = (models) => {
-        Course.belongsTo(models.User)
+        Course.belongsTo(models.User, {
+            foreignKey: {
+                fieldName: "user",
+                allowNull: false,
+            }
+        })
     }
     return Course;
 }

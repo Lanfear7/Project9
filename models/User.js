@@ -12,23 +12,48 @@ module.exports = (sequelize) => {
         firstName: {
             type: Sequelize.STRING,
             allowNull: false,
+            validate:{
+                notNull: {
+                    msg: "Must provide a first name."
+                }
+            }
         },
         lastName: {
             type: Sequelize.STRING,
             allowNull: false,
+            validate:{
+                notNull: {
+                    msg: "Must provide a last name."
+                }
+            }
         },
         emailAddress: {
             type: Sequelize.STRING,
-            allowNull: false
+            allowNull: false,
+            validate:{
+                notNull: {
+                    msg: "Must provide a email address."
+                }
+            }
         },
         password: {
             type: Sequelize.STRING,
             allowNull: false,
+            validate:{
+                notNull: {
+                    msg: "Must provide a password."
+                }
+            }
         }
     },{ sequelize });
     //DB association to the course module  
     User.associate = (models) => {
-        User.hasMany(models.Course)
+        User.hasMany(models.Course, {
+            foreignKey: {
+                fieldName: "user",
+                allowNull: false,
+            }
+        })
     }
     return User;
 }
