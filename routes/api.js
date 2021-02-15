@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const bcrypt = require('bcrypt')
 const auth = require('basic-auth');
 const {sequelize, User, Course} = require('../models')
 
@@ -33,16 +34,19 @@ authenticateUser = () => {
         next();
     }
 }
+router.get('/', (req, res)=> {
+    console.log('main api')
+    res.sendStatus(200)
+})
 
 router.get('/users', authenticateUser(), asyncHandler(async(req, res, next) => {
-    console.log(req.currentUser)
+    res.json(req.currentUser.dataValues).status(200)
 }))
 
 router.post('/users', asyncHandler(async(req, res) => {
     try{
-        console.log(req.body)
         await User.create(req.body)
-        res.sendStatus(200);
+        res.location("/").sendStatus(200).end()
     }catch(error){
         if(error.name === 'SequelizeValidationError'){
             let errors = []

@@ -25,6 +25,7 @@ module.exports = (sequelize) => {
             allowNull: false,
         }
     },{ sequelize });
+    
     //DB association to the course module  
     Course.associate = (models) => {
         Course.belongsTo(models.User, {

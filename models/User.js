@@ -1,4 +1,5 @@
 const { Model } = require('sequelize');
+const bcrypt = require('bcrypt')
 const Sequelize = require('sequelize');
 
 module.exports = (sequelize) => {
@@ -39,6 +40,10 @@ module.exports = (sequelize) => {
         password: {
             type: Sequelize.STRING,
             allowNull: false,
+            set(val) {
+                const hashedPass = bcrypt.hashSync(val, 10)
+                this.setDataValue('password', hashedPass)
+            },
             validate:{
                 notNull: {
                     msg: "Must provide a password."
@@ -46,6 +51,7 @@ module.exports = (sequelize) => {
             }
         }
     },{ sequelize });
+
     //DB association to the course module  
     User.associate = (models) => {
         User.hasMany(models.Course, {
