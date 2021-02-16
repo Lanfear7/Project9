@@ -18,15 +18,10 @@ authenticateUser = () => {
     return async(req, res, next) =>{
         const credentials = auth(req);
         if(credentials){
-            console.log('got credentials')
             const user = await User.findOne({where: {emailAddress: credentials.name}});
             if(user){
-                console.log('found user')
-                console.log(credentials.pass)
-                console.log(user.dataValues.password)
                 const userSecret = bcrypt.compareSync(credentials.pass, user.dataValues.password);
                 if(userSecret){
-                    console.log('found pass')
                     req.currentUser = user;
                 }
             }
@@ -34,11 +29,6 @@ authenticateUser = () => {
         next();
     }
 }
-router.get('/', (req, res)=> {
-    console.log('main api')
-    res.sendStatus(200)
-})
-
 router.get('/users', authenticateUser(), asyncHandler(async(req, res, next) => {
     res.json(req.currentUser.dataValues).status(200)
 }))
@@ -58,6 +48,38 @@ router.post('/users', asyncHandler(async(req, res) => {
         
     }
     
+}))
+
+router.get("/courses", async (req, res) => {
+    const courses = await Course.findAll({
+      include: [
+        {
+          model: User,
+          as: "User",
+          attributes:['firstName','lastName','emailAddress', 'password'] //This will only return these attributes from the associated model 
+        },
+      ]
+    });
+    res.json(courses).status(200);
+});
+
+router.get('/courses/:id', asyncHandler(async(req, res) => {
+    let course = await Course.findByPk(req.params.id)
+    if(course){
+        course = await Course.findByPk(req.params.id, {
+            include: [
+              {
+                model: User,
+                as: "User",
+                attributes: ['firstName','lastName','emailAddress', 'password'] //This will only return these attributes from the associated model 
+              },
+            ]
+          })
+        res.json(course).status(200)
+    }else{
+        throw error = new Error('Query not found')
+    }
+
 }))
 
 module.exports = router
