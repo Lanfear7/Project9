@@ -31,7 +31,11 @@ module.exports = (sequelize) => {
         emailAddress: {
             type: Sequelize.STRING,
             allowNull: false,
+            unique: true,
             validate:{
+                isEmail:{
+                    msg: 'Must provide a valid email address...'
+                },
                 notNull: {
                     msg: "Must provide a email address."
                 }
@@ -58,7 +62,6 @@ module.exports = (sequelize) => {
             as: "User",
             foreignKey: {
                 fieldName: "userId",
-                allowNull: false,
             }
         })
     }

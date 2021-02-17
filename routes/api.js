@@ -16,6 +16,7 @@ asyncHandler = (cb) => {
 
 authenticateUser = () => {
     return async(req, res, next) =>{
+        let err;
         const credentials = auth(req);
         if(credentials){
             const user = await User.findOne({where: {emailAddress: credentials.name}});
@@ -23,20 +24,35 @@ authenticateUser = () => {
                 const userSecret = bcrypt.compareSync(credentials.pass, user.dataValues.password);
                 if(userSecret){
                     req.currentUser = user;
+                }else{
+                    err = `Password did not match.`
                 }
+            }else{
+                err = `No user was found.`
             }
+        }else {
+            err = `Auth header was not found.`
+        }
+        if(err){
+            console.log(err)
+            res.json({err}).status(401)
         }
         next();
     }
 }
 router.get('/users', authenticateUser(), asyncHandler(async(req, res, next) => {
-    res.json(req.currentUser.dataValues).status(200)
+    console.log(req.currentUser)
+    res.json(req.currentUser).status(200)
 }))
 
 router.post('/users', asyncHandler(async(req, res) => {
     try{
-        await User.create(req.body)
-        res.location("/").sendStatus(200).end()
+        if(req.body.firstName && req.body.lastName && req.body.emailAddress && req.body.password){
+            await User.create(req.body)
+            res.location("/").sendStatus(200).end()
+        }else{
+            throw error = new Error('Missing a body requirement')
+        }
     }catch(error){
         if(error.name === 'SequelizeValidationError'){
             let errors = []
@@ -63,6 +79,21 @@ router.get("/courses", async (req, res) => {
     res.json(courses).status(200);
 });
 
+router.post('/courses', authenticateUser(),asyncHandler(async(req, res) => {
+    try{
+        if(req.body.title && req.body.description){
+            await Course.create(req.body)
+            res.sendStatus(201)
+        } else{
+            throw error = new Error('No Title or Description was provided')
+        }   
+    }catch(error){
+        res.sendStatus(400)
+        throw error
+        
+    }
+}))
+
 router.get('/courses/:id', asyncHandler(async(req, res) => {
     let course = await Course.findByPk(req.params.id)
     if(course){
@@ -77,9 +108,38 @@ router.get('/courses/:id', asyncHandler(async(req, res) => {
           })
         res.json(course).status(200)
     }else{
+        res.sendStatus(400)
         throw error = new Error('Query not found')
     }
+}));
 
+router.put('/courses/:id', authenticateUser(),asyncHandler(async(req, res) => {
+    let err;
+    if(req.body.title && req.body.description){
+        let course = await Course.findByPk(req.params.id)
+        if(course){
+            await course.update(req.body)
+            res.sendStatus(204)
+        }else{
+            throw error = new Error('Query not found')
+        }  
+    }else{
+        err = `No Title or Description was provided`
+    }
+    if(err){
+        res.json({err}).status(400)
+    }
+    
+}))
+
+router.delete('/courses/:id', authenticateUser(),asyncHandler(async(req, res) => {
+    let course = await Course.findByPk(req.params.id)
+    if(course){
+        await course.destroy()
+        res.sendStatus(204)
+    }else{
+        throw error = new Error('Query not found')
+    }
 }))
 
 module.exports = router
