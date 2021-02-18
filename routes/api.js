@@ -52,11 +52,23 @@ router.get('/users', authenticateUser(), asyncHandler(async(req, res, next) => {
 router.post('/users', asyncHandler(async(req, res) => {
     let err;
     try{
-        if(req.body.firstName && req.body.lastName && req.body.emailAddress && req.body.password){
-            await User.create(req.body);
-            res.location("/").sendStatus(200).end();
+        if(req.body.firstName){
+            if(req.body.lastName){
+                if(req.body.emailAddress){
+                    if(req.body.password){
+                        await User.create(req.body);
+                        res.location("/").status(201).end();
+                    }else{
+                        err =  `Missing body requirement password.`;
+                    }
+                }else{
+                    err =  `Missing body requirement emailAddress.`;
+                }
+            }else{
+                err =  `Missing body requirement lastName.`;
+            }  
         }else{
-            err =  `Missing body requirement(s)`;
+            err =  `Missing body requirement firstName.`;
         }
         if(err){
             res.status(400).json({err});
@@ -78,7 +90,7 @@ router.get("/courses", async (req, res) => {
         {
           model: User,
           as: "User",
-          attributes:['firstName','lastName','emailAddress', 'password'] //This will only return these attributes from the associated model 
+          attributes:['firstName','lastName','emailAddress'] //This will only return these attributes from the associated model 
         },
       ],
       attributes:['id','title','description','estimatedTime','materialsNeeded','userId',]
@@ -87,14 +99,22 @@ router.get("/courses", async (req, res) => {
 });
 
 router.post('/courses', authenticateUser(),asyncHandler(async(req, res) => {
+    let err;
     try{
-        if(req.body.title && req.body.description){
-            await Course.create(req.body);
-            res.location('/');
-            res.sendStatus(201);
-        } else{
-            throw error = new Error('No Title or Description was provided');
-        }   
+        if(req.body.title ){
+            if(req.body.description){
+                await Course.create(req.body);
+                res.location('/');
+                res.status(201).end();
+            } else{
+                err = `No Description was provided.`;
+            }
+        }else{
+            err = `No Title was provided.`;
+        }
+        if(err){
+            res.json({err})
+        }
     }catch(error){
         res.sendStatus(400);
         throw error;
