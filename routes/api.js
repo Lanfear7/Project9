@@ -34,37 +34,43 @@ authenticateUser = () => {
             err = `Auth header was not found.`
         }
         if(err){
-            console.log(err)
-            res.json({err}).status(401)
+            res.status(401).json({err})
         }
         next();
     }
 }
 router.get('/users', authenticateUser(), asyncHandler(async(req, res, next) => {
-    console.log(req.currentUser)
-    res.json(req.currentUser).status(200)
+    let parsedValues = {
+        "id": req.currentUser.dataValues.id,
+        "firstName": req.currentUser.dataValues.firstName,
+        "lastName": req.currentUser.dataValues.lastName,
+        "emailAddress": req.currentUser.dataValues.emailAddress 
+    }
+    res.status(200).json(parsedValues);
 }))
 
 router.post('/users', asyncHandler(async(req, res) => {
+    let err;
     try{
         if(req.body.firstName && req.body.lastName && req.body.emailAddress && req.body.password){
-            await User.create(req.body)
-            res.location("/").sendStatus(200).end()
+            await User.create(req.body);
+            res.location("/").sendStatus(200).end();
         }else{
-            throw error = new Error('Missing a body requirement')
+            err =  `Missing body requirement(s)`;
+        }
+        if(err){
+            res.status(400).json({err});
         }
     }catch(error){
-        if(error.name === 'SequelizeValidationError'){
-            let errors = []
-            error.errors.forEach(err =>  errors.push(err.message))
-            res.json({errors}).status(400)
+        if(error.name === 'SequelizeValidationError' || error.name === 'SequelizeUniqueConstraintError'){
+            let errors = [];
+            error.errors.forEach(err =>  errors.push(err.message));
+            res.status(400).json({errors});
         } else {
             throw error;
         }
-        
     }
-    
-}))
+}));
 
 router.get("/courses", async (req, res) => {
     const courses = await Course.findAll({
@@ -74,28 +80,30 @@ router.get("/courses", async (req, res) => {
           as: "User",
           attributes:['firstName','lastName','emailAddress', 'password'] //This will only return these attributes from the associated model 
         },
-      ]
+      ],
+      attributes:['id','title','description','estimatedTime','materialsNeeded','userId',]
     });
-    res.json(courses).status(200);
+    res.status(200).json(courses);
 });
 
 router.post('/courses', authenticateUser(),asyncHandler(async(req, res) => {
     try{
         if(req.body.title && req.body.description){
-            await Course.create(req.body)
-            res.sendStatus(201)
+            await Course.create(req.body);
+            res.location('/');
+            res.sendStatus(201);
         } else{
-            throw error = new Error('No Title or Description was provided')
+            throw error = new Error('No Title or Description was provided');
         }   
     }catch(error){
-        res.sendStatus(400)
-        throw error
+        res.sendStatus(400);
+        throw error;
         
     }
-}))
+}));
 
 router.get('/courses/:id', asyncHandler(async(req, res) => {
-    let course = await Course.findByPk(req.params.id)
+    let course = await Course.findByPk(req.params.id);
     if(course){
         course = await Course.findByPk(req.params.id, {
             include: [
@@ -104,42 +112,55 @@ router.get('/courses/:id', asyncHandler(async(req, res) => {
                 as: "User",
                 attributes: ['firstName','lastName','emailAddress', 'password'] //This will only return these attributes from the associated model 
               },
-            ]
-          })
-        res.json(course).status(200)
+            ],
+            attributes:['id','title','description','estimatedTime','materialsNeeded','userId',]
+          });
+        res.status(200).json(course);
     }else{
-        res.sendStatus(400)
-        throw error = new Error('Query not found')
+        res.sendStatus(400);
+        throw error = new Error('Query not found.');
     }
 }));
 
 router.put('/courses/:id', authenticateUser(),asyncHandler(async(req, res) => {
     let err;
     if(req.body.title && req.body.description){
-        let course = await Course.findByPk(req.params.id)
+        let course = await Course.findByPk(req.params.id);
         if(course){
-            await course.update(req.body)
-            res.sendStatus(204)
+            if(course.dataValues.userId == req.currentUser.dataValues.id){
+                await course.update(req.body);
+                res.sendStatus(204);
+            }else{
+                const err = `Must be the owner of the course to update.`;
+                res.status(403).json({err});
+            } 
         }else{
-            throw error = new Error('Query not found')
+            throw error = new Error('Query not found.');
         }  
     }else{
-        err = `No Title or Description was provided`
+        err = `No Title or Description was provided.`;
     }
     if(err){
-        res.json({err}).status(400)
+        res.status(400).json({err});
     }
-    
-}))
+}));
 
 router.delete('/courses/:id', authenticateUser(),asyncHandler(async(req, res) => {
-    let course = await Course.findByPk(req.params.id)
+    let course = await Course.findByPk(req.params.id);
+    let err;
     if(course){
-        await course.destroy()
-        res.sendStatus(204)
+        if(course.dataValues.userId == req.currentUser.dataValues.id){
+            await course.destroy();
+            res.sendStatus(204);
+        }else{
+            err = `Must be the owner of this course to delete.`;
+        }   
     }else{
-        throw error = new Error('Query not found')
+        throw error = new Error('Query not found');
     }
-}))
+    if(err){
+        res.status(403).json({err});
+    }
+}));
 
-module.exports = router
+module.exports = router;
