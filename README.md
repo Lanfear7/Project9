@@ -17,9 +17,15 @@ This app will run on => localhost:5000/
 Routes available
 
 GET /api/users - Retrieves the currently authenticated user
+
 POST /api/users - Allowes the user to create a login account
+
 GET /api/courses - Retrieves a list of courses from the database
+
 GET /api/courses/:id - Retrieves a specific course and its information
+
 POST /api/courses - Allows a user to create a course which only they will be able to update or delete
+
 PUT /api/courses/:id - Allows the user to update any course they created
+
 DELETE /api/courses/:id - User can delete any course they created
