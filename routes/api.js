@@ -118,7 +118,6 @@ router.post('/courses', authenticateUser(),asyncHandler(async(req, res) => {
     }catch(error){
         res.sendStatus(400);
         throw error;
-        
     }
 }));
 

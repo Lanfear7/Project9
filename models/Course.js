@@ -33,5 +33,6 @@ module.exports = (sequelize) => {
             }
         })
     }
+    
     return Course;
 }
