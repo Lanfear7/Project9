@@ -101,10 +101,10 @@ router.get("/courses", async (req, res) => {
 router.post('/courses', authenticateUser(),asyncHandler(async(req, res) => {
     let err;
     try{
-        if(req.body.title ){
+        if(req.body.title){
             if(req.body.description){
-                await Course.create(req.body);
-                res.location('/');
+                const course =  await Course.create(req.body);  
+                res.location(`/courses/${course.dataValues.id}`);
                 res.status(201).end();
             } else{
                 err = `No Description was provided.`;
@@ -113,10 +113,10 @@ router.post('/courses', authenticateUser(),asyncHandler(async(req, res) => {
             err = `No Title was provided.`;
         }
         if(err){
-            res.json({err})
+            res.status(400).json({err})
         }
     }catch(error){
-        res.sendStatus(400);
+        res.status(400);
         throw error;
     }
 }));
