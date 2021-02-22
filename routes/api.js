@@ -52,27 +52,8 @@ router.get('/users', authenticateUser(), asyncHandler(async(req, res, next) => {
 router.post('/users', asyncHandler(async(req, res) => {
     let err;
     try{
-        if(req.body.firstName){
-            if(req.body.lastName){
-                if(req.body.emailAddress){
-                    if(req.body.password){
-                        await User.create(req.body);
-                        res.location("/").status(201).end();
-                    }else{
-                        err =  `Missing body requirement password.`;
-                    }
-                }else{
-                    err =  `Missing body requirement emailAddress.`;
-                }
-            }else{
-                err =  `Missing body requirement lastName.`;
-            }  
-        }else{
-            err =  `Missing body requirement firstName.`;
-        }
-        if(err){
-            res.status(400).json({err});
-        }
+        await User.create(req.body);
+        res.location("/").status(201).end();
     }catch(error){
         if(error.name === 'SequelizeValidationError' || error.name === 'SequelizeUniqueConstraintError'){
             let errors = [];
@@ -99,24 +80,17 @@ router.get("/courses", async (req, res) => {
 });
 
 router.post('/courses', authenticateUser(),asyncHandler(async(req, res) => {
-    let err;
     try{
-        if(req.body.title){
-            if(req.body.description){
-                const course =  await Course.create(req.body);  
-                res.location(`/courses/${course.dataValues.id}`);
-                res.status(201).end();
-            } else{
-                err = `No Description was provided.`;
-            }
-        }else{
-            err = `No Title was provided.`;
-        }
-        if(err){
-            res.status(400).json({err})
-        }
+        const course =  await Course.create(req.body);  
+        res.location(`/courses/${course.dataValues.id}`);
+        res.status(201).end();
     }catch(error){
-        res.status(400);
+        if(error.name === 'SequelizeValidationError'){
+            let errors = []
+            error.errors.forEach(err => errors.push(err.message))
+            res.status(400).json({errors});
+        }
+        
         throw error;
     }
 }));
